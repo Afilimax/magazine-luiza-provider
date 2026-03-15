@@ -1,0 +1,1 @@
+# @afilimax/magazine-luiza-provider
