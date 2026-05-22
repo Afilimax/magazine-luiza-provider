@@ -1,6 +1,7 @@
 {
   "name": "@afilimax/magazine-luiza-provider",
   "version": "0.1.0",
+  "description": "Provedor de afiliação para Magazine Luiza. Desenvolvido para Afilimax.",
   "type": "commonjs",
   "repository": {
     "type": "git",
@@ -29,11 +30,16 @@
     "access": "public"
   },
   "keywords": [
-    "marcuth"
+    "afilimax",
+    "magazine luiza",
+    "magalu",
+    "affiliate",
+    "provider"
   ],
   "author": "Marcuth",
   "license": "MIT",
   "devDependencies": {
+    "@afilimax/core": "^0.4.1",
     "@types/node": "^25.5.0",
     "@vitest/coverage-v8": "^4.1.0",
     "eslint": "^10.0.3",
@@ -45,5 +51,11 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "puppeteer": "^24.39.1",
+    "puppeteer-core": "^24.39.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }
