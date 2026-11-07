@@ -1,8 +1,9 @@
-import { PuppeteerExtra } from "puppeteer-extra"
 import StealthPlugin from "puppeteer-extra-plugin-stealth"
+import { PuppeteerExtra } from "puppeteer-extra"
 import { Page, Cookie } from "puppeteer-core"
 
 import { AffiliateProvider } from "@afilimax/core"
+
 import { requireVanillaPuppeteer, getBrowserPath } from "./utils"
 
 export type MagazineLuizaProviderOptions = {
@@ -24,7 +25,7 @@ export class MagazineLuizaProvider extends AffiliateProvider<MagazineLuizaProvid
     }
 
     supportsUrl(url: string): boolean {
-        return this.domains.some(domain => url.includes(domain))
+        return this.domains.some((domain) => url.includes(domain))
     }
 
     private async resolveProductUrl(page: Page, url: string): Promise<string> {
@@ -48,7 +49,7 @@ export class MagazineLuizaProvider extends AffiliateProvider<MagazineLuizaProvid
 
     private async clickOnGenerateLinkButton(page: Page) {
         // Usa seletores mais robustos e aguarda visibilidade
-        const generateButtonSelector = "xpath///button[label[contains(., \"Gerar link\")]]"
+        const generateButtonSelector = 'xpath///button[label[contains(., "Gerar link")]]'
         await page.waitForSelector(generateButtonSelector, { timeout: 15000, visible: true })
         await page.click(generateButtonSelector)
     }
@@ -57,7 +58,7 @@ export class MagazineLuizaProvider extends AffiliateProvider<MagazineLuizaProvid
         try {
             await page.waitForResponse(
                 (request) => request.url().includes("magazinevoce.com.br/azion-rochelle-proxy/v1/shortenlink/onelink"),
-                { timeout: 10000 }
+                { timeout: 10000 },
             )
         } catch {
             // Silently ignore timeout if the response doesn't come or isn't needed
@@ -65,7 +66,7 @@ export class MagazineLuizaProvider extends AffiliateProvider<MagazineLuizaProvid
     }
 
     private async getAffiliateUrlFromPage(page: Page) {
-        const inputSelector = "input[data-testid=\"copy-to-clipboard-input\"]"
+        const inputSelector = 'input[data-testid="copy-to-clipboard-input"]'
         await page.waitForSelector(inputSelector, { timeout: 15000, visible: true })
         return await page.evaluate((sel) => {
             const el = document.querySelector(sel) as HTMLInputElement
