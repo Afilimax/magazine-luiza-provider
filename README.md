@@ -41,6 +41,7 @@ console.log(affiliateUrl);
 ## Licença
 
 MIT
+
 ---
 
 ## Automatize sua operação de afiliados
