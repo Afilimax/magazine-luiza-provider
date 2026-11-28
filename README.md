@@ -7,40 +7,156 @@
 
 # @afilimax/magazine-luiza-provider
 
-Provedor de afiliação para Magazine Luiza. Desenvolvido para Afilimax.
+Provedor de links de afiliado da Magazine Luiza para o ecossistema Afilimax. O pacote automatiza o portal Magazine Você com Puppeteer e uma sessão autenticada para converter URLs de produtos em links de divulgação.
 
-Este pacote utiliza automação de navegador (Puppeteer) para gerar links de afiliado do Magazine Luiza, integrando-se ao portal de afiliados.
+## Recursos
+
+- Geração de links pelo portal de afiliados Magazine Você.
+- Automação de navegador com Puppeteer e plugin stealth.
+- Conversão de URLs do domínio principal para o slug do afiliado.
+- Correção do slug em URLs de afiliado já existentes.
+- Expansão de links curtos `magazineluiza.onelink.me` antes da conversão.
+- Uso de cookies exportados de uma sessão autenticada.
+- Fechamento do navegador após cada chamada, inclusive em caso de erro.
+- Compatibilidade com `AffiliateProvider` e `AffiliateManager`.
 
 ## Instalação
 
 ```bash
-npm install @afilimax/magazine-luiza-provider
+npm install @afilimax/magazine-luiza-provider @afilimax/core
 ```
 
-## Uso
+O `@afilimax/core` fornece a classe `AffiliateProvider` usada pelo pacote. O Puppeteer e os componentes de automação são instalados como dependências.
+
+## Como usar
+
+Carregue os cookies de um arquivo local fora do controle de versão e informe o slug da sua loja de afiliado:
 
 ```typescript
-import { MagazineLuizaProvider } from "@afilimax/magazine-luiza-provider";
+import { readFileSync } from "node:fs"
+import { MagazineLuizaProvider } from "@afilimax/magazine-luiza-provider"
 
 const provider = new MagazineLuizaProvider({
-  affiliateSlug: "seu-slug",
-  cookies: [
-    // Seus cookies de autenticação do portal Magalu
-  ]
-});
+    affiliateSlug: process.env.MAGAZINE_LUIZA_AFFILIATE_SLUG!,
+    cookies: JSON.parse(readFileSync("cookies.json", "utf8")),
+})
 
-const affiliateUrl = await provider.createAffiliateUrl("https://www.magazineluiza.com.br/produto/123");
-console.log(affiliateUrl);
+async function main() {
+    const productUrl = "https://www.magazineluiza.com.br/produto/123"
+
+    try {
+        const affiliateUrl = await provider.createAffiliateUrl(productUrl)
+        console.log("Affiliate URL:", affiliateUrl)
+    } catch (error) {
+        console.error("Failed to create affiliate URL:", error)
+    }
+}
+
+main()
 ```
 
-## Requisitos
+Cada chamada abre uma instância do navegador, gera o link e fecha o navegador automaticamente.
 
-- Node.js 18+
-- Puppeteer instalado (o pacote já inclui como dependência)
+### Uso com AffiliateManager
+
+```typescript
+import { AffiliateManager } from "@afilimax/core"
+import { MagazineLuizaProvider } from "@afilimax/magazine-luiza-provider"
+
+const manager = new AffiliateManager([
+    new MagazineLuizaProvider({
+        affiliateSlug: process.env.MAGAZINE_LUIZA_AFFILIATE_SLUG!,
+        cookies: JSON.parse(readFileSync("cookies.json", "utf8")),
+    }),
+])
+
+const affiliateUrl = await manager.createAffiliateUrl("https://www.magazineluiza.com.br/produto/123")
+
+console.log("Affiliate URL:", affiliateUrl)
+```
+
+O gerenciador retorna `null` quando nenhum provedor registrado aceita a URL.
+
+## Configuração
+
+A interface `MagazineLuizaProviderOptions` aceita:
+
+| Opção | Tipo | Obrigatória | Descrição |
+| :--- | :--- | :--- | :--- |
+| `cookies` | `Cookie[]` | Sim | Cookies da sessão autenticada no portal de afiliados. |
+| `affiliateSlug` | `string` | Sim | Slug da loja usado nas URLs do Magazine Você. |
+| `puppeteer` | `any` | Não | Opções adicionais repassadas a `puppeteer.launch`. |
+
+As opções de `puppeteer` são aplicadas sobre os valores padrão. O provedor procura uma instalação local de Chrome nos caminhos conhecidos e, quando não a encontra, usa a resolução padrão do Puppeteer.
+
+### Como obter os cookies
+
+1. Faça login na conta participante do programa de afiliados da Magazine Luiza.
+2. Abra o portal Magazine Você e confirme que a página de geração de links está acessível.
+3. Exporte os cookies da sessão em JSON com uma extensão de navegador.
+4. Salve o conteúdo em `cookies.json` e mantenha o arquivo fora do controle de versão.
+
+Os cookies representam acesso à sua conta. Não os compartilhe nem os inclua no código.
+
+## Referência da API
+
+### `new MagazineLuizaProvider(options)`
+
+Cria o provedor e prepara a instância do Puppeteer com o plugin stealth.
+
+### `createAffiliateUrl(url: string): Promise<string>`
+
+Resolve a URL de origem, aplica o slug configurado, abre a página de afiliado e retorna o endereço exibido no campo de cópia. O método lança um erro quando a navegação, os seletores ou a geração do link falham.
+
+| Parâmetro | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `url` | `string` | URL do produto, página de afiliado ou link curto suportado. |
+
+### `supportsUrl(url: string): boolean`
+
+Verifica se a URL contém um dos domínios suportados.
+
+### Domínios suportados
+
+- `magazineluiza.com.br`
+- `magazinevoce.com.br`
+- `magazineluiza.onelink.me`
+
+## Desenvolvimento
+
+Instale as dependências com `npm install`. Os scripts disponíveis são:
+
+| Comando | Finalidade |
+| :--- | :--- |
+| `npm run dev` | Executa `src/index.ts` com `ts-node`. |
+| `npm run build` | Compila o TypeScript para `dist/`. |
+| `npm test` | Executa os testes uma vez com Vitest. |
+| `npm run test:watch` | Executa os testes em modo de observação. |
+| `npm run test:cov` | Executa os testes com cobertura. |
+| `npm run lint` | Executa o ESLint com correção automática. |
+| `npm run format` | Formata os arquivos de `src/` com Prettier. |
+
+O teste prático incluído em `npm test` lê `__tests__/auth.json`. Ele é ignorado quando o arquivo não existe ou está incompleto:
+
+```json
+{
+    "cookies": [
+        {
+            "name": "session",
+            "value": "your-session-cookie",
+            "domain": ".magazinevoce.com.br",
+            "path": "/"
+        }
+    ],
+    "affiliateSlug": "your-affiliate-slug"
+}
+```
+
+Não versione esse arquivo nem credenciais reais.
 
 ## Licença
 
-MIT
+Distribuído sob a licença [MIT](./LICENSE).
 
 ---
 
